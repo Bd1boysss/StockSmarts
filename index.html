@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>StockMind — Analis Saham AI</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+/* ─── THEME VARS ─── */
+:root[data-theme="dark"]{
+  --bg:#0a0a0b;--bg2:#111113;--bg3:#18181b;--bg4:#1e1e22;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --text:#f0ede8;--text2:#8a8784;--text3:#4a4946;
+  --card-bg:#111113;--input-bg:#18181b;
+  --shadow:rgba(0,0,0,0.4);
+}
+:root[data-theme="light"]{
+  --bg:#f5f4f0;--bg2:#ffffff;--bg3:#f0efe9;--bg4:#e8e7e0;
+  --border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.14);
+  --text:#1a1917;--text2:#6b6966;--text3:#a8a6a2;
+  --card-bg:#ffffff;--input-bg:#f5f4f0;
+  --shadow:rgba(0,0,0,0.1);
+}
+:root{
+  --accent:#c8f53a;--adim:rgba(200,245,58,0.12);--aborder:rgba(200,245,58,0.3);
+  --atext:#1a1f00;--red:#ff6b6b;--green:#4dde8a;--blue:#60a5fa;
+}
+
+html{scroll-behavior:smooth}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;-webkit-font-smoothing:antialiased;transition:background .25s,color .25s}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");opacity:.018;pointer-events:none;z-index:0}
+[data-theme="light"] body::before{opacity:.04}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:2px}
+input,textarea,button,select{font-family:'Outfit',sans-serif}
+input::placeholder,textarea::placeholder{color:var(--text3)}
+
+/* ─── TOAST ─── */
+#toastContainer{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{display:flex;align-items:center;gap:10px;padding:11px 16px;border-radius:10px;font-size:13px;font-weight:500;color:var(--text);background:var(--bg2);border:1px solid var(--border2);box-shadow:0 4px 20px var(--shadow);pointer-events:all;animation:toastIn .3s ease;max-width:320px}
+.toast.out{animation:toastOut .3s ease forwards}
+.toast-icon{width:18px;height:18px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px}
+.toast.success .toast-icon{background:rgba(77,222,138,.2);color:var(--green)}
+.toast.info    .toast-icon{background:rgba(96,165,250,.2);color:var(--blue)}
+.toast.error   .toast-icon{background:rgba(255,107,107,.2);color:var(--red)}
+@keyframes toastIn{from{opacity:0;transform:translateY(12px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes toastOut{to{opacity:0;transform:translateY(8px) scale(.95)}}
+
+/* ─── NAV ─── */
+nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;height:56px;border-bottom:1px solid var(--border);background:var(--bg);backdrop-filter:blur(16px);transition:background .25s}
+.nav-logo{display:flex;align-items:center;gap:9px;text-decoration:none}
+.logo-mark{width:30px;height:30px;background:var(--accent);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-mark svg{width:16px;height:16px}
+.brand{font-size:14px;font-weight:600;color:var(--text)}
+.nav-links{display:flex;align-items:center;gap:4px}
+.nav-link{font-size:12px;color:var(--text2);background:none;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;transition:all .15s}
+.nav-link:hover{color:var(--text);background:var(--bg3)}
+.nav-cta{font-size:12px;font-weight:700;background:var(--accent);color:var(--atext);padding:6px 14px;border-radius:6px;border:none;cursor:pointer;transition:opacity .15s}
+.nav-cta:hover{opacity:.88}
+.nav-right{display:flex;align-items:center;gap:6px}
+/* Theme toggle */
+.theme-btn{width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:none;border:1px solid var(--border2);border-radius:7px;cursor:pointer;color:var(--text2);transition:all .15s}
+.theme-btn:hover{color:var(--text);background:var(--bg3)}
+.theme-btn svg{width:15px;height:15px}
+/* Keyboard hint */
+.kbd-hint{font-size:10px;font-family:'DM Mono',monospace;color:var(--text3);padding:2px 6px;border:1px solid var(--border2);border-radius:4px;background:var(--bg3)}
+
+/* ─── HERO ─── */
+.hero{min-height:88vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 2rem 50px;text-align:center;position:relative;overflow:hidden}
+.hero-glow{position:absolute;top:15%;left:50%;transform:translateX(-50%);width:600px;height:350px;background:radial-gradient(ellipse,rgba(200,245,58,.08) 0%,transparent 70%);pointer-events:none}
+[data-theme="light"] .hero-glow{background:radial-gradient(ellipse,rgba(200,245,58,.15) 0%,transparent 70%)}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-family:'DM Mono',monospace;color:var(--accent);border:1px solid var(--aborder);background:var(--adim);padding:4px 12px;border-radius:99px;margin-bottom:1.75rem;letter-spacing:.5px;animation:fu .6s ease both}
+.badge-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite}
+.hero h1{font-family:'Instrument Serif',serif;font-size:clamp(2.5rem,6vw,5rem);font-weight:400;line-height:1.07;letter-spacing:-1px;margin-bottom:1.25rem;animation:fu .6s .1s ease both}
+.hero h1 em{font-style:italic;color:var(--accent)}
+.hero-sub{font-size:clamp(.95rem,1.8vw,1.1rem);color:var(--text2);max-width:480px;line-height:1.7;margin-bottom:2rem;font-weight:300;animation:fu .6s .2s ease both}
+.hero-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;animation:fu .6s .3s ease both}
+.btn-p{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;background:var(--accent);color:var(--atext);padding:11px 22px;border-radius:9px;border:none;cursor:pointer;transition:opacity .15s,transform .12s}
+.btn-p:hover{opacity:.9;transform:translateY(-2px)}
+.btn-g{display:inline-flex;align-items:center;font-size:13px;color:var(--text2);padding:11px 22px;border-radius:9px;border:1px solid var(--border2);background:none;cursor:pointer;transition:all .15s}
+.btn-g:hover{color:var(--text);background:var(--bg3)}
+.t-pills{margin-top:2.5rem;display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:520px;animation:fu .6s .4s ease both}
+.t-pill{font-family:'DM Mono',monospace;font-size:10px;padding:3px 9px;border-radius:99px;border:1px solid var(--border);background:var(--bg2);color:var(--text3);cursor:pointer;transition:all .15s}
+.t-pill:hover{color:var(--accent);border-color:var(--aborder);background:var(--adim)}
+
+/* ─── MARQUEE ─── */
+.mq{overflow:hidden;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:1.2rem 0}
+.mq-track{display:flex;gap:2rem;width:max-content;animation:marquee 28s linear infinite}
+.mi{display:flex;align-items:center;gap:7px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);white-space:nowrap}
+.mup{color:var(--green)}.mdn{color:var(--red)}
+
+/* ─── FEATURES (scroll reveal) ─── */
+.features{padding:80px 2rem;max-width:1060px;margin:0 auto}
+.slabel{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;text-align:center;margin-bottom:.9rem}
+.features h2{font-family:'Instrument Serif',serif;font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:400;text-align:center;letter-spacing:-.4px;margin-bottom:.8rem}
+.features>p{color:var(--text2);font-size:14px;font-weight:300;text-align:center;margin-bottom:2.5rem}
+.feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.feat-card{background:var(--card-bg);padding:1.75rem;transition:background .2s;opacity:0;transform:translateY(20px)}
+.feat-card.revealed{opacity:1;transform:translateY(0);transition:opacity .5s ease,transform .5s ease,background .2s}
+.feat-card:hover{background:var(--bg3)}
+.fi{width:38px;height:38px;background:var(--adim);border:1px solid var(--aborder);border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:1.1rem}
+.fi svg{width:17px;height:17px}
+.feat-card h3{font-size:14px;font-weight:600;margin-bottom:.4rem;color:var(--text)}
+.feat-card p{font-size:12px;color:var(--text2);line-height:1.6;font-weight:300}
+
+/* ─── APP ─── */
+#analyzer{max-width:860px;margin:0 auto;padding:0 1.5rem 80px}
+.app-head{text-align:center;margin-bottom:2rem}
+.app-head h2{font-family:'Instrument Serif',serif;font-size:clamp(1.6rem,3vw,2.3rem);font-weight:400;letter-spacing:-.3px;margin-bottom:.4rem}
+.app-head p{color:var(--text2);font-size:13px;font-weight:300}
+
+/* kbd shortcut bar */
+.shortcut-bar{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:1.25rem}
+.shortcut-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3)}
+
+/* ─── TABS ─── */
+.tabs{display:flex;gap:3px;background:var(--bg2);border:1px solid var(--border);border-radius:11px;padding:3px;margin-bottom:1rem}
+.tab-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;font-size:12px;color:var(--text2);background:none;border:1px solid transparent;border-radius:8px;padding:7px 8px;cursor:pointer;transition:all .15s}
+.tab-btn.on{color:var(--text);background:var(--bg3);border-color:var(--border2);font-weight:600}
+.tab-btn svg{width:12px;height:12px;flex-shrink:0}
+
+/* ─── INPUT PANEL ─── */
+.inp-panel{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:1.1rem;margin-bottom:.9rem}
+.mode-bar{display:flex;gap:3px;background:var(--bg3);border-radius:7px;padding:3px;width:fit-content;margin-bottom:1rem;flex-wrap:wrap}
+.mode-btn{font-size:11px;padding:5px 11px;border-radius:5px;border:none;cursor:pointer;transition:all .15s;font-weight:500;color:var(--text2);background:transparent}
+.mode-btn.on{background:var(--accent);color:var(--atext);font-weight:700}
+
+/* TICKER with autocomplete */
+.ticker-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;position:relative}
+.ticker-inp{font-family:'DM Mono',monospace;font-size:14px;font-weight:500;letter-spacing:2px;text-transform:uppercase;width:120px;flex-shrink:0;padding:0 12px;height:44px;background:var(--input-bg);border:1px solid var(--border2);border-radius:9px;color:var(--accent);outline:none;transition:border-color .15s}
+.ticker-inp:focus{border-color:rgba(200,245,58,.5)}
+.autocomplete-box{position:absolute;top:48px;left:0;width:200px;background:var(--bg2);border:1px solid var(--border2);border-radius:9px;overflow:hidden;z-index:50;box-shadow:0 8px 24px var(--shadow);display:none}
+.ac-item{display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;transition:background .12s;font-size:13px}
+.ac-item:hover{background:var(--bg3)}
+.ac-ticker{font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:var(--accent);min-width:48px}
+.ac-name{font-size:11px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ticker-hint{font-size:11px;color:var(--text3)}
+
+/* LANG TOGGLE */
+.lang-btn{font-size:11px;font-family:'DM Mono',monospace;color:var(--text2);background:none;border:1px solid var(--border2);padding:4px 10px;border-radius:6px;cursor:pointer;transition:all .15s;margin-left:auto}
+.lang-btn:hover{color:var(--text);border-color:var(--border2)}
+
+.q-inp{width:100%;padding:0 12px;height:44px;background:var(--input-bg);border:1px solid var(--border2);border-radius:9px;color:var(--text);font-size:13px;outline:none;transition:border-color .15s}
+.q-inp:focus{border-color:var(--border2)}
+.go-btn{height:44px;padding:0 18px;background:var(--accent);color:var(--atext);font-size:12px;font-weight:700;border:none;border-radius:9px;cursor:pointer;white-space:nowrap;transition:all .15s;display:flex;align-items:center;gap:6px}
+.go-btn:hover{opacity:.9;transform:translateY(-1px)}
+.go-btn:disabled{opacity:.35;cursor:default;transform:none}
+.row{display:flex;gap:8px;margin-top:8px}
+
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.chip{font-size:11px;padding:5px 11px;border-radius:99px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;transition:all .12s}
+.chip:hover{color:var(--text);border-color:var(--border2);background:var(--bg3)}
+.chip.on{background:var(--adim);color:var(--accent);border-color:var(--aborder)}
+
+.q-area{width:100%;min-height:120px;padding:12px;background:var(--input-bg);border:1px solid var(--border2);border-radius:9px;color:var(--text);font-size:13px;line-height:1.6;resize:vertical;outline:none;transition:border-color .15s}
+.q-area:focus{border-color:var(--border2)}
+.area-footer{display:flex;justify-content:space-between;align-items:center;margin-top:8px;flex-wrap:wrap;gap:6px}
+.char-count{font-size:10px;font-family:'DM Mono',monospace;color:var(--text3)}
+
+.wiz-step{margin-bottom:12px}
+.wiz-label{font-size:10px;font-family:'DM Mono',monospace;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.wiz-opts{display:flex;flex-wrap:wrap;gap:5px}
+.wiz-opt{font-size:12px;padding:6px 13px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;transition:all .15s}
+.wiz-opt:hover{color:var(--text)}
+.wiz-opt.on{background:var(--adim);color:var(--accent);border-color:var(--aborder);font-weight:600}
+.wiz-preview{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin:10px 0;font-size:12px;color:var(--text2);font-style:italic;min-height:42px;line-height:1.5}
+
+.tmpl-empty{font-size:12px;color:var(--text3);padding:1.25rem;text-align:center;background:var(--bg3);border-radius:8px;margin-bottom:8px}
+.tmpl-card{background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:10px 12px;display:flex;align-items:center;gap:10px;margin-bottom:6px;cursor:pointer;transition:border-color .15s}
+.tmpl-card:hover{border-color:var(--border2)}
+.tmpl-info{flex:1;min-width:0}
+.tmpl-name{font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px}
+.tmpl-q{font-size:11px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tmpl-use{font-size:11px;font-weight:600;color:var(--accent);background:var(--adim);border:1px solid var(--aborder);padding:4px 10px;border-radius:6px;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:opacity .15s}
+.tmpl-use:hover{opacity:.8}
+.tmpl-del{font-size:18px;color:var(--text3);background:none;border:none;cursor:pointer;padding:0 2px;flex-shrink:0;line-height:1;transition:color .15s}
+.tmpl-del:hover{color:var(--red)}
+.tmpl-add{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.tmpl-name-inp,.tmpl-q-inp{flex:1;padding:0 10px;height:36px;background:var(--input-bg);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-size:12px;outline:none;min-width:80px}
+.tmpl-add-btn{height:36px;padding:0 12px;background:var(--bg3);border:1px solid var(--border2);border-radius:7px;color:var(--text2);font-size:12px;cursor:pointer;white-space:nowrap;transition:all .15s}
+.tmpl-add-btn:hover{color:var(--text);border-color:var(--border2)}
+
+/* ─── RESULT ─── */
+.result-panel{background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden;min-height:180px}
+.r-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:3.5rem 2rem;color:var(--text3);font-size:12px;text-align:center}
+.r-empty svg{opacity:.18}
+.r-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:3rem;color:var(--text3);font-family:'DM Mono',monospace;font-size:11px}
+/* Skeleton */
+.skeleton{background:var(--bg3);border-radius:6px;animation:shimmer 1.5s infinite}
+.skeleton-line{height:12px;margin-bottom:8px;border-radius:4px;background:linear-gradient(90deg,var(--bg3) 0%,var(--bg4) 50%,var(--bg3) 100%);background-size:200% 100%;animation:shimmer 1.5s infinite}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.dots span{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--accent);animation:blink 1.2s infinite}
+.dots span:nth-child(2){animation-delay:.2s}
+.dots span:nth-child(3){animation-delay:.4s}
+.r-topbar{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--border);background:var(--bg3);flex-wrap:wrap;gap:6px}
+.ticker-tag{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;letter-spacing:1.5px;color:var(--accent);background:var(--adim);border:1px solid var(--aborder);padding:2px 9px;border-radius:5px}
+.r-meta{font-size:10px;font-family:'DM Mono',monospace;color:var(--text3)}
+.act-btns{display:flex;gap:3px}
+.act-btn{width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:none;border:1px solid var(--border);border-radius:6px;color:var(--text2);cursor:pointer;transition:all .12s;position:relative}
+.act-btn:hover{color:var(--text);background:var(--bg4)}
+.act-btn[data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);white-space:nowrap;font-size:10px;background:var(--bg4);border:1px solid var(--border2);padding:3px 7px;border-radius:5px;color:var(--text2);pointer-events:none}
+.act-btn svg{width:12px;height:12px}
+.r-body{padding:1.1rem 1.25rem}
+.prose h3{font-family:'Instrument Serif',serif;font-size:15px;font-style:italic;font-weight:400;color:var(--text);margin:1.1rem 0 .4rem}
+.prose h3:first-child{margin-top:0}
+.prose p{font-size:13px;color:var(--text2);line-height:1.75;margin-bottom:.5rem}
+.prose ul{padding-left:1.1rem;margin-bottom:.5rem}
+.prose li{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:2px}
+.prose strong{color:var(--text);font-weight:500}
+.cursor-blink::after{content:'▋';color:var(--accent);animation:cblink 1s infinite}
+.r-disc{font-size:10px;font-family:'DM Mono',monospace;color:var(--text3);padding:8px 1.25rem;border-top:1px solid var(--border)}
+.r-err{color:var(--red);font-size:12px;font-family:'DM Mono',monospace;padding:2.5rem;text-align:center}
+
+/* Print style */
+@media print{
+  nav,.mode-bar,.tabs,.shortcut-bar,.inp-panel,footer,.faq-sec,.features,.hero,.mq,#toastContainer{display:none!important}
+  body{background:#fff;color:#000}
+  .result-panel{border:none;box-shadow:none}
+  .r-body{padding:0}
+  .prose p,.prose li{color:#333;font-size:14px}
+  .prose h3{color:#000;font-size:16px}
+}
+
+/* ─── COMPARE ─── */
+.cmp-grid{display:grid;gap:10px}
+.cmp-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.cmp-header{padding:7px 12px;background:var(--bg3);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+
+/* ─── HISTORY ─── */
+.h-list{display:flex;flex-direction:column;gap:7px}
+.h-item{background:var(--bg2);border:1px solid var(--border);border-radius:11px;padding:12px 14px;cursor:pointer;transition:border-color .15s;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.h-item:hover{border-color:var(--border2)}
+
+/* ─── WATCHLIST ─── */
+.wl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.wl-card{background:var(--bg2);border:1px solid var(--border);border-radius:11px;padding:.9rem;display:flex;flex-direction:column;gap:8px}
+.wl-analyze{font-size:11px;font-weight:600;background:var(--adim);color:var(--accent);border:1px solid var(--aborder);padding:5px 0;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;transition:opacity .15s}
+.wl-analyze:hover{opacity:.8}
+
+/* ─── CONFIRM DIALOG ─── */
+.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.confirm-box{background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:1.5rem;max-width:340px;width:90%;text-align:center}
+.confirm-box h4{font-size:15px;font-weight:600;margin-bottom:.5rem;color:var(--text)}
+.confirm-box p{font-size:13px;color:var(--text2);margin-bottom:1.25rem;line-height:1.5}
+.confirm-btns{display:flex;gap:8px;justify-content:center}
+.confirm-cancel{padding:8px 20px;background:none;border:1px solid var(--border2);border-radius:8px;color:var(--text2);cursor:pointer;font-size:13px;transition:all .15s}
+.confirm-cancel:hover{color:var(--text);border-color:var(--border2)}
+.confirm-ok{padding:8px 20px;background:var(--red);border:none;border-radius:8px;color:#fff;cursor:pointer;font-size:13px;font-weight:600;transition:opacity .15s}
+.confirm-ok:hover{opacity:.85}
+
+/* ─── FAQ ─── */
+.faq-sec{max-width:660px;margin:0 auto;padding:0 1.5rem 80px}
+.faq-sec h2{font-family:'Instrument Serif',serif;font-size:1.9rem;font-weight:400;text-align:center;margin-bottom:2rem}
+.faq-item{border-bottom:1px solid var(--border)}
+.faq-q{width:100%;display:flex;justify-content:space-between;align-items:center;padding:1rem 0;background:none;border:none;cursor:pointer;text-align:left;gap:10px;color:var(--text)}
+.faq-q span{font-size:13px;font-weight:500}
+.faq-q svg{width:13px;height:13px;color:var(--text3);flex-shrink:0;transition:transform .2s}
+.faq-q.open svg{transform:rotate(90deg)}
+.faq-a{font-size:12px;color:var(--text2);line-height:1.7;padding-bottom:.9rem;display:none}
+.faq-a.open{display:block}
+
+/* ─── FOOTER ─── */
+footer{border-top:1px solid var(--border);padding:1.75rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.9rem}
+.foot-brand{display:flex;align-items:center;gap:9px}
+.foot-logo{width:26px;height:26px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center}
+.foot-logo svg{width:13px;height:13px}
+.foot-copy{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)}
+.foot-note{font-size:10px;font-family:'DM Mono',monospace;color:var(--text3);text-align:right;max-width:360px}
+.empty-box{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:2.5rem;text-align:center;color:var(--text3);font-size:12px;line-height:1.7}
+.empty-box svg{opacity:.18;margin-bottom:10px;display:block;margin-left:auto;margin-right:auto}
+
+/* ─── ANIMATIONS ─── */
+@keyframes fu{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes blink{0%,80%,100%{opacity:.15}40%{opacity:1}}
+@keyframes cblink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+@media(max-width:600px){
+  .nav-links{display:none}
+  .feat-grid{grid-template-columns:1fr}
+  .hero h1{font-size:2.5rem}
+  .shortcut-bar{display:none}
+  footer{flex-direction:column;text-align:center}
+  .foot-note{text-align:center;max-width:none}
+}
+@media(max-width:440px){.tab-label{display:none}}
+</style>
+</head>
+<body>
+
+<!-- TOAST CONTAINER -->
+<div id="toastContainer"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 22 22" fill="none"><polyline points="2,16 6,10 10,13 15,5 20,8" stroke="#0a0a0b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="20" cy="8" r="1.8" fill="#0a0a0b"/></svg>
+    </div>
+    <span class="brand">StockMind</span>
+  </a>
+  <div class="nav-right">
+    <div class="nav-links">
+      <button class="nav-link" onclick="go('fitur')">Fitur</button>
+      <button class="nav-link" onclick="go('analyzer')">Analisis</button>
+      <button class="nav-link" onclick="go('analyzer');setTab('riwayat')">Riwayat</button>
+      <button class="nav-link" onclick="go('analyzer');setTab('watchlist')">Watchlist</button>
+    </div>
+    <!-- Language toggle -->
+    <button class="lang-btn" id="langBtn" onclick="toggleLang()" title="Switch language">ID</button>
+    <!-- Theme toggle -->
+    <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle theme">
+      <svg id="themeIconDark" viewBox="0 0 20 20" fill="none"><path d="M10 3v1M10 16v1M3 10H2M18 10h-1M5.05 5.05l-.7-.7M15.66 15.66l-.7-.7M5.05 14.95l-.7.7M15.66 4.34l-.7.7M13 10a3 3 0 11-6 0 3 3 0 016 0z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <svg id="themeIconLight" viewBox="0 0 20 20" fill="none" style="display:none"><path d="M17.5 10c0 4.14-3.36 7.5-7.5 7.5a7.5 7.5 0 01-.37-14.98A5.5 5.5 0 0017.5 10z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+    </button>
+    <button class="nav-cta" onclick="go('analyzer')" id="navCtaBtn">Mulai Gratis</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="badge"><span class="badge-dot"></span><span id="badgeTxt">Bertenaga Claude AI · Bahasa Indonesia</span></div>
+  <h1 id="heroH1">Analisis Saham<br>dengan <em>kecerdasan</em><br>buatan</h1>
+  <p class="hero-sub" id="heroSub">Fundamental, valuasi, risiko, dan sentimen pasar — semua dalam satu pertanyaan. Untuk investor ritel yang ingin keputusan lebih cerdas.</p>
+  <div class="hero-btns">
+    <button class="btn-p" onclick="go('analyzer')" id="heroBtn1">Mulai Analisis <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button class="btn-g" onclick="go('fitur')" id="heroBtn2">Lihat Fitur</button>
+  </div>
+  <div class="t-pills">
+    <span class="t-pill" onclick="quickTicker('BBCA')">BBCA</span>
+    <span class="t-pill" onclick="quickTicker('TLKM')">TLKM</span>
+    <span class="t-pill" onclick="quickTicker('BMRI')">BMRI</span>
+    <span class="t-pill" onclick="quickTicker('GOTO')">GOTO</span>
+    <span class="t-pill" onclick="quickTicker('ASII')">ASII</span>
+    <span class="t-pill" onclick="quickTicker('NVDA')">NVDA</span>
+    <span class="t-pill" onclick="quickTicker('AAPL')">AAPL</span>
+    <span class="t-pill" onclick="quickTicker('TSLA')">TSLA</span>
+    <span class="t-pill" onclick="quickTicker('ANTM')">ANTM</span>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="mq"><div class="mq-track" id="mqTrack"></div></div>
+
+<!-- FEATURES -->
+<section class="features" id="fitur">
+  <p class="slabel" id="lFiturLabel">// kemampuan</p>
+  <h2 id="lFiturH">Semua yang kamu butuhkan<br>untuk investasi lebih cerdas</h2>
+  <p id="lFiturSub">Analisis mendalam dalam hitungan detik, bukan jam</p>
+  <div class="feat-grid" id="featGrid">
+    <div class="feat-card"><div class="fi"><svg viewBox="0 0 18 18" fill="none"><rect x="2" y="10" width="3" height="6" rx="1" fill="#c8f53a"/><rect x="7.5" y="6" width="3" height="10" rx="1" fill="#c8f53a"/><rect x="13" y="2" width="3" height="14" rx="1" fill="#c8f53a" opacity=".5"/></svg></div><h3 id="f1h">Analisis Fundamental</h3><p id="f1p">P/E, EPS, ROE, DER diinterpretasikan dalam bahasa mudah dipahami investor ritel.</p></div>
+    <div class="feat-card"><div class="fi"><svg viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7" stroke="#c8f53a" stroke-width="1.5"/><path d="M9 5v4l3 2" stroke="#c8f53a" stroke-width="1.5" stroke-linecap="round"/></svg></div><h3 id="f2h">Sentimen & Timing</h3><p id="f2p">Penilaian momentum pasar untuk menentukan waktu entry atau exit yang tepat.</p></div>
+    <div class="feat-card"><div class="fi"><svg viewBox="0 0 18 18" fill="none"><path d="M9 2L2 16h14L9 2z" stroke="#c8f53a" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 7v4M9 13v.5" stroke="#c8f53a" stroke-width="1.5" stroke-linecap="round"/></svg></div><h3 id="f3h">Peta Risiko</h3><p id="f3p">Identifikasi risiko bisnis, regulasi, makro, dan kompetitif secara komprehensif.</p></div>
+    <div class="feat-card"><div class="fi"><svg viewBox="0 0 18 18" fill="none"><path d="M4 9l3 3 7-7" stroke="#c8f53a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><h3 id="f4h">4 Mode Pertanyaan</h3><p id="f4p">Cepat, bebas, wizard guided, atau template tersimpan — sesuai gaya analisismu.</p></div>
+    <div class="feat-card"><div class="fi"><svg viewBox="0 0 18 18" fill="none"><path d="M2 10 6 6l4 3 4-7 4 3" stroke="#c8f53a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div><h3 id="f5h">Streaming Real-time</h3><p id="f5p">Jawaban AI muncul kata per kata — tidak perlu menunggu loading lama sama sekali.</p></div>
+    <div class="feat-card"><div class="fi"><svg viewBox="0 0 18 18" fill="none"><rect x="3" y="3" width="5" height="5" rx="1.5" stroke="#c8f53a" stroke-width="1.5"/><rect x="10" y="3" width="5" height="5" rx="1.5" stroke="#c8f53a" stroke-width="1.5"/><rect x="3" y="10" width="5" height="5" rx="1.5" stroke="#c8f53a" stroke-width="1.5"/><rect x="10" y="10" width="5" height="5" rx="1.5" stroke="#c8f53a" stroke-width="1.5" opacity=".4"/></svg></div><h3 id="f6h">Watchlist & Riwayat</h3><p id="f6p">Simpan saham favorit dan akses kembali semua riwayat analisis kapanpun.</p></div>
+  </div>
+</section>
+
+<!-- ANALYZER -->
+<section id="analyzer" style="padding-top:20px">
+<div id="app">
+  <div class="app-head">
+    <p class="slabel" id="lAppLabel">// coba sekarang</p>
+    <h2 id="lAppH">Tanya apa saja tentang<br>saham pilihanmu</h2>
+    <p id="lAppSub">Pilih mode pertanyaan yang paling sesuai</p>
+  </div>
+
+  <!-- Keyboard shortcuts hint -->
+  <div class="shortcut-bar">
+    <div class="shortcut-item"><span class="kbd-hint">⌘ Enter</span><span id="kbdAnalyze">Analisis</span></div>
+    <div class="shortcut-item"><span class="kbd-hint">Esc</span><span id="kbdClear">Bersihkan</span></div>
+    <div class="shortcut-item"><span class="kbd-hint">⌘ P</span><span id="kbdPrint">Print</span></div>
+    <div class="shortcut-item"><span class="kbd-hint">⌘ K</span><span id="kbdFocus">Fokus ticker</span></div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab-btn on" id="tab-analisis" onclick="setTab('analisis')">
+      <svg viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4" stroke="currentColor" stroke-width="1.5"/><path d="M9 9l3 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span class="tab-label" id="lTabAnalisis">Analisis</span>
+    </button>
+    <button class="tab-btn" id="tab-compare" onclick="setTab('compare')">
+      <svg viewBox="0 0 14 14" fill="none"><path d="M2 7h10M2 4h5M7 10h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span class="tab-label" id="lTabCompare">Bandingkan</span>
+    </button>
+    <button class="tab-btn" id="tab-riwayat" onclick="setTab('riwayat')">
+      <svg viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M7 4v3l2 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <span class="tab-label" id="lbl-riwayat">Riwayat</span>
+    </button>
+    <button class="tab-btn" id="tab-watchlist" onclick="setTab('watchlist')">
+      <svg viewBox="0 0 14 14" fill="none"><path d="M7 2l1.5 3 3.5.5-2.5 2.5.5 3.5L7 10l-3 1.5.5-3.5L2 5.5 5.5 5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+      <span class="tab-label" id="lbl-watchlist">Watchlist</span>
+    </button>
+  </div>
+
+  <!-- PANEL: ANALISIS -->
+  <div id="panel-analisis">
+    <div class="inp-panel">
+      <div class="mode-bar">
+        <button class="mode-btn on" id="mb-quick"    onclick="setMode('quick')">⚡ <span id="lModeQuick">Cepat</span></button>
+        <button class="mode-btn"   id="mb-free"     onclick="setMode('free')">✏️ <span id="lModeFree">Bebas</span></button>
+        <button class="mode-btn"   id="mb-wizard"   onclick="setMode('wizard')">🧭 <span id="lModeWizard">Wizard</span></button>
+        <button class="mode-btn"   id="mb-template" onclick="setMode('template')">📋 <span id="lModeTemplate">Template</span></button>
+      </div>
+
+      <!-- TICKER + AUTOCOMPLETE -->
+      <div class="ticker-row">
+        <div style="position:relative">
+          <input class="ticker-inp" id="ticker" type="text" placeholder="BBCA" maxlength="10"
+            oninput="this.value=this.value.toUpperCase();showAC(this.value)"
+            onfocus="showAC(this.value)" onblur="setTimeout(hideAC,200)"/>
+          <div class="autocomplete-box" id="acBox"></div>
+        </div>
+        <span class="ticker-hint" id="lTickerHint">← kode saham</span>
+        <button class="lang-btn" id="langBtnInline" onclick="toggleLang()">🌐 ID</button>
+      </div>
+
+      <!-- MODE: CEPAT -->
+      <div id="mp-quick">
+        <div class="chips" id="chipGroup">
+          <span class="chip" onclick="pickChip(this,'Bagaimana fundamental dan valuasi saham ini saat ini?')" id="c1">Fundamental</span>
+          <span class="chip" onclick="pickChip(this,'Apa saja risiko utama berinvestasi di saham ini?')" id="c2">Risiko Investasi</span>
+          <span class="chip" onclick="pickChip(this,'Bagaimana posisi kompetitif perusahaan ini di industrinya?')" id="c3">Kompetitif</span>
+          <span class="chip" onclick="pickChip(this,'Jelaskan histori dividen dan kebijakan payout saham ini')" id="c4">Dividen</span>
+          <span class="chip" onclick="pickChip(this,'Apakah saat ini waktu yang tepat untuk membeli atau menahan saham ini?')" id="c5">Buy/Hold/Sell</span>
+          <span class="chip" onclick="pickChip(this,'Bagaimana sentimen pasar dan katalis ke depan untuk saham ini?')" id="c6">Sentimen</span>
+          <span class="chip" onclick="pickChip(this,'Siapa kompetitor utama dan bagaimana perbandingan kinerjanya?')" id="c7">Kompetitor</span>
+          <span class="chip" onclick="pickChip(this,'Bagaimana tren pendapatan dan laba bersih 3 tahun terakhir?')" id="c8">Tren Keuangan</span>
+        </div>
+        <div class="row">
+          <input class="q-inp" id="q-quick" type="text" placeholder="Atau ketik pertanyaan sendiri..."/>
+          <button class="go-btn" onclick="runQuick()" id="goQuick">
+            <span id="lGoBtn">Analisis</span>
+            <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- MODE: BEBAS -->
+      <div id="mp-free" style="display:none">
+        <textarea class="q-area" id="q-free" oninput="updateCount()" placeholder="Tulis pertanyaan atau instruksi analisis apa saja...
+
+Contoh:
+- Kalau invest 10 juta di saham ini 5 tahun lagi bagaimana?
+- Analisis dari perspektif value investing ala Warren Buffett
+- Jelaskan risiko geopolitik yang bisa mempengaruhi harga saham ini
+- Buatkan ringkasan investasi 1 paragraf untuk pemula"></textarea>
+        <div class="area-footer">
+          <span class="char-count" id="charCount">0 karakter</span>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button onclick="saveTmplFromFree()" style="font-size:11px;color:var(--accent);background:var(--adim);border:1px solid var(--aborder);padding:5px 11px;border-radius:6px;cursor:pointer" id="lSaveTmpl">+ Simpan Template</button>
+            <button class="go-btn" onclick="runFree()" id="goFree"><span id="lGoBtnFree">Analisis</span> <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODE: WIZARD -->
+      <div id="mp-wizard" style="display:none">
+        <div class="wiz-step">
+          <div class="wiz-label" id="lWiz1">STEP 1 · Tujuan investasi</div>
+          <div class="wiz-opts" id="wg-goal">
+            <button class="wiz-opt" onclick="wiz('goal',this,'Saya sedang mempertimbangkan untuk membeli saham ini')">Mau beli</button>
+            <button class="wiz-opt" onclick="wiz('goal',this,'Saya sudah memiliki saham ini dan ingin mengevaluasi posisi')">Sudah hold, evaluasi</button>
+            <button class="wiz-opt" onclick="wiz('goal',this,'Saya ingin memutuskan apakah perlu menjual saham ini')">Mau jual</button>
+            <button class="wiz-opt" onclick="wiz('goal',this,'Saya ingin memahami bisnis perusahaan ini lebih dalam')">Riset bisnis</button>
+          </div>
+        </div>
+        <div class="wiz-step">
+          <div class="wiz-label" id="lWiz2">STEP 2 · Horizon investasi</div>
+          <div class="wiz-opts" id="wg-hor">
+            <button class="wiz-opt" onclick="wiz('hor',this,'dengan perspektif jangka pendek kurang dari 3 bulan')">Pendek &lt;3 bulan</button>
+            <button class="wiz-opt" onclick="wiz('hor',this,'dengan perspektif jangka menengah 6 hingga 12 bulan')">Menengah 6–12 bln</button>
+            <button class="wiz-opt" onclick="wiz('hor',this,'dengan perspektif jangka panjang lebih dari 2 tahun')">Panjang &gt;2 tahun</button>
+          </div>
+        </div>
+        <div class="wiz-step">
+          <div class="wiz-label" id="lWiz3">STEP 3 · Fokus analisis</div>
+          <div class="wiz-opts" id="wg-focus">
+            <button class="wiz-opt" onclick="wiz('focus',this,'Fokus pada fundamental dan valuasi')">Fundamental</button>
+            <button class="wiz-opt" onclick="wiz('focus',this,'Fokus pada analisis risiko dan faktor downside')">Risiko</button>
+            <button class="wiz-opt" onclick="wiz('focus',this,'Fokus pada sentimen pasar dan momentum teknikal')">Sentimen</button>
+            <button class="wiz-opt" onclick="wiz('focus',this,'Berikan analisis komprehensif dari semua aspek')">Komprehensif</button>
+          </div>
+        </div>
+        <div class="wiz-preview" id="wizPrev">Pilih semua opsi di atas untuk melihat preview pertanyaan...</div>
+        <div style="display:flex;justify-content:flex-end">
+          <button class="go-btn" onclick="runWizard()"><span id="lGoBtnWiz">Analisis</span> <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        </div>
+      </div>
+
+      <!-- MODE: TEMPLATE -->
+      <div id="mp-template" style="display:none">
+        <div id="tmplList"></div>
+        <div id="tmplEmpty" class="tmpl-empty">Belum ada template. Tulis di mode <strong>Bebas</strong> lalu simpan, atau tambah manual di bawah.</div>
+        <div class="tmpl-add">
+          <input class="tmpl-name-inp" id="tnName" placeholder="Nama template..."/>
+          <input class="tmpl-q-inp" id="tnQ" placeholder="Isi pertanyaan template..."/>
+          <button class="tmpl-add-btn" onclick="addTmpl()">+ Tambah</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULT PANEL -->
+    <div class="result-panel">
+      <div class="r-empty" id="rEmpty">
+        <svg width="34" height="34" viewBox="0 0 34 34" fill="none"><rect x="4" y="22" width="5" height="8" rx="2" fill="currentColor"/><rect x="12" y="14" width="5" height="16" rx="2" fill="currentColor"/><rect x="20" y="6" width="5" height="24" rx="2" fill="currentColor"/></svg>
+        <span id="lEmptyState">Masukkan kode saham dan pertanyaan untuk memulai</span>
+      </div>
+      <div class="r-loading" id="rLoad" style="display:none">
+        <!-- Skeleton lines -->
+        <div style="width:100%;padding:0 1.25rem">
+          <div class="skeleton-line" style="width:40%;margin-bottom:14px"></div>
+          <div class="skeleton-line" style="width:100%"></div>
+          <div class="skeleton-line" style="width:90%"></div>
+          <div class="skeleton-line" style="width:75%;margin-bottom:14px"></div>
+          <div class="skeleton-line" style="width:35%;margin-bottom:14px"></div>
+          <div class="skeleton-line" style="width:95%"></div>
+          <div class="skeleton-line" style="width:80%"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+          <div class="dots"><span></span><span></span><span></span></div>
+          <span id="rLoadTxt" style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text3)">Menganalisis...</span>
+        </div>
+      </div>
+      <div id="rTopBar" style="display:none" class="r-topbar">
+        <div style="display:flex;align-items:center;gap:7px">
+          <span class="ticker-tag" id="rTicker"></span>
+          <span class="r-meta" id="rTime"></span>
+        </div>
+        <div class="act-btns">
+          <button class="act-btn" id="starBtn" data-tip="Watchlist" onclick="toggleWL()">
+            <svg viewBox="0 0 14 14" fill="none"><path id="starPath" d="M7 2l1.5 3 3.5.5-2.5 2.5.5 3.5L7 10l-3 1.5.5-3.5L2 5.5 5.5 5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="act-btn" data-tip="Salin" onclick="copyR()">
+            <svg viewBox="0 0 14 14" fill="none"><rect x="4" y="4" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M2 10V3a1 1 0 011-1h7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          </button>
+          <button class="act-btn" data-tip="Bagikan" onclick="shareR()">
+            <svg viewBox="0 0 14 14" fill="none"><circle cx="11" cy="3" r="1.5" stroke="currentColor" stroke-width="1.3"/><circle cx="11" cy="11" r="1.5" stroke="currentColor" stroke-width="1.3"/><circle cx="3" cy="7" r="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M4.5 6.2l5-2.7M4.5 7.8l5 2.7" stroke="currentColor" stroke-width="1.3"/></svg>
+          </button>
+          <button class="act-btn" data-tip="Unduh .txt" onclick="exportR()">
+            <svg viewBox="0 0 14 14" fill="none"><path d="M7 2v7M4 7l3 3 3-3M2 11h10" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="act-btn" data-tip="Print / PDF" onclick="window.print()">
+            <svg viewBox="0 0 14 14" fill="none"><path d="M3 5V2h8v3M3 10H2V5h10v5h-1M3 8h8M3 10v2h8v-2" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </div>
+      <div id="rBody" style="display:none" class="r-body">
+        <div class="prose" id="rContent"></div>
+      </div>
+      <div id="rDisc" style="display:none" class="r-disc" id="lDisc">⚠ Analisis ini bersifat edukatif, bukan saran investasi. Selalu lakukan riset mandiri.</div>
+      <div id="rErr" style="display:none" class="r-err"></div>
+    </div>
+  </div>
+
+  <!-- PANEL: COMPARE -->
+  <div id="panel-compare" style="display:none">
+    <div class="inp-panel">
+      <div style="display:flex;gap:7px;margin-bottom:9px;flex-wrap:wrap" id="cmpInputs">
+        <input class="ticker-inp" placeholder="Saham 1" id="ct0" style="width:100px" oninput="this.value=this.value.toUpperCase()"/>
+        <input class="ticker-inp" placeholder="Saham 2" id="ct1" style="width:100px" oninput="this.value=this.value.toUpperCase()"/>
+      </div>
+      <div class="row" style="margin-top:0">
+        <input class="q-inp" id="cmpTopic" value="Perbandingan fundamental, valuasi, dan prospek investasi secara komprehensif"/>
+        <button class="go-btn" onclick="runCompare()">Bandingkan <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+      <button onclick="addCmpTicker()" style="margin-top:8px;font-size:11px;color:var(--text3);background:none;border:1px dashed var(--border2);border-radius:7px;padding:4px 11px;cursor:pointer">+ Tambah saham (maks 4)</button>
+    </div>
+    <div id="cmpResults" class="cmp-grid" style="display:none"></div>
+  </div>
+
+  <!-- PANEL: RIWAYAT -->
+  <div id="panel-riwayat" style="display:none">
+    <div class="empty-box" id="hEmpty" style="display:none">
+      <svg width="30" height="30" viewBox="0 0 30 30" fill="none"><circle cx="15" cy="15" r="11" stroke="currentColor" stroke-width="2"/><path d="M15 8v7l4 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <div id="lHEmpty">Belum ada riwayat analisis</div>
+    </div>
+    <div class="h-list" id="hList"></div>
+  </div>
+
+  <!-- PANEL: WATCHLIST -->
+  <div id="panel-watchlist" style="display:none">
+    <div class="empty-box" id="wlEmpty" style="display:none">
+      <svg width="30" height="30" viewBox="0 0 30 30" fill="none"><path d="M15 3l3 7 8 1-6 5 2 8-7-4-7 4 2-8-6-5 8-1z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+      <div id="lWLEmpty">Belum ada saham di watchlist</div>
+      <div style="font-size:11px;margin-top:4px" id="lWLHint">Klik ★ pada hasil analisis untuk menambahkan</div>
+    </div>
+    <div class="wl-grid" id="wlGrid"></div>
+  </div>
+</div>
+</section>
+
+<!-- FAQ -->
+<section class="faq-sec">
+  <h2 id="lFaqH">Pertanyaan Umum</h2>
+  <div class="faq-item"><button class="faq-q" onclick="faq(this)"><span id="fq1">Apakah ini saran investasi?</span><svg viewBox="0 0 14 14" fill="none"><path d="M5 2l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="faq-a" id="fa1">Tidak. StockMind adalah alat edukatif bertenaga AI. Tidak menggantikan saran penasihat investasi berlisensi.</div></div>
+  <div class="faq-item"><button class="faq-q" onclick="faq(this)"><span id="fq2">Saham apa yang bisa dianalisis?</span><svg viewBox="0 0 14 14" fill="none"><path d="M5 2l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="faq-a" id="fa2">Saham IDX, NYSE/NASDAQ, dan emiten global. Cukup masukkan kode ticker yang benar.</div></div>
+  <div class="faq-item"><button class="faq-q" onclick="faq(this)"><span id="fq3">Apa itu mode Wizard?</span><svg viewBox="0 0 14 14" fill="none"><path d="M5 2l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="faq-a" id="fa3">Wizard memandu kamu dengan 3 pertanyaan — tujuan, horizon, fokus — lalu merangkai pertanyaan analisis yang tepat secara otomatis.</div></div>
+  <div class="faq-item"><button class="faq-q" onclick="faq(this)"><span id="fq4">Bagaimana cara menyimpan template?</span><svg viewBox="0 0 14 14" fill="none"><path d="M5 2l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="faq-a" id="fa4">Di mode Bebas, tulis pertanyaanmu lalu klik "Simpan Template". Template tersimpan di browser dan bisa dipakai ulang kapanpun.</div></div>
+  <div class="faq-item"><button class="faq-q" onclick="faq(this)"><span id="fq5">Apakah riwayat tersimpan?</span><svg viewBox="0 0 14 14" fill="none"><path d="M5 2l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="faq-a" id="fa5">Ya, riwayat, watchlist, dan template tersimpan di localStorage browser. Data tidak dikirim ke server manapun.</div></div>
+</section>
+
+<footer>
+  <div class="foot-brand">
+    <div class="foot-logo"><svg viewBox="0 0 14 14" fill="none"><polyline points="1,10 4,6 7,8 10,3 13,5" stroke="#0a0a0b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <span class="foot-copy">StockMind · 2025</span>
+  </div>
+  <div class="foot-note" id="lFootNote">Bukan penasihat investasi berlisensi. Semua analisis hanya untuk tujuan edukatif.</div>
+</footer>
+
+<script>
+// ─── STATE
+let hist=[], wl=[], tmpl=[], curT='', curA='', curQ='', busy=false, cmpN=2
+let ws={goal:'',hor:'',focus:''}
+let lang='id', theme='dark'
+
+try{hist=JSON.parse(localStorage.getItem('sm_h')||'[]')}catch{}
+try{wl=JSON.parse(localStorage.getItem('sm_w')||'[]')}catch{}
+try{tmpl=JSON.parse(localStorage.getItem('sm_t')||'[]')}catch{}
+try{theme=localStorage.getItem('sm_theme')||'dark'}catch{}
+try{lang=localStorage.getItem('sm_lang')||'id'}catch{}
+
+// Apply saved theme
+document.documentElement.setAttribute('data-theme',theme)
+if(theme==='light'){document.getElementById('themeIconDark').style.display='none';document.getElementById('themeIconLight').style.display=''}
+
+// ─── TRANSLATIONS
+const T={
+  id:{
+    badge:'Bertenaga Claude AI · Bahasa Indonesia',
+    h1:'Analisis Saham<br>dengan <em>kecerdasan</em><br>buatan',
+    sub:'Fundamental, valuasi, risiko, dan sentimen pasar — semua dalam satu pertanyaan.',
+    btn1:'Mulai Analisis', btn2:'Lihat Fitur',
+    fiturLabel:'// kemampuan',
+    fiturH:'Semua yang kamu butuhkan<br>untuk investasi lebih cerdas',
+    fiturSub:'Analisis mendalam dalam hitungan detik, bukan jam',
+    appLabel:'// coba sekarang',
+    appH:'Tanya apa saja tentang<br>saham pilihanmu',
+    appSub:'Pilih mode pertanyaan yang paling sesuai',
+    kbdAnalyze:'Analisis', kbdClear:'Bersihkan', kbdPrint:'Print', kbdFocus:'Fokus ticker',
+    tabAnalisis:'Analisis', tabCompare:'Bandingkan',
+    modeQuick:'Cepat', modeFree:'Bebas', modeWizard:'Wizard', modeTemplate:'Template',
+    tickerHint:'← kode saham',
+    goBtn:'Analisis',
+    saveTmpl:'+ Simpan Template',
+    wiz1:'STEP 1 · Tujuan investasi',
+    wiz2:'STEP 2 · Horizon investasi',
+    wiz3:'STEP 3 · Fokus analisis',
+    wizPrev:'Pilih semua opsi di atas untuk melihat preview pertanyaan...',
+    empty:'Masukkan kode saham dan pertanyaan untuk memulai',
+    disc:'⚠ Analisis ini bersifat edukatif, bukan saran investasi.',
+    faqH:'Pertanyaan Umum',
+    fq1:'Apakah ini saran investasi?',fa1:'Tidak. StockMind adalah alat edukatif bertenaga AI.',
+    fq2:'Saham apa yang bisa dianalisis?',fa2:'Saham IDX, NYSE/NASDAQ, dan emiten global.',
+    fq3:'Apa itu mode Wizard?',fa3:'Wizard memandu kamu dengan 3 pertanyaan lalu merangkai pertanyaan analisis yang tepat.',
+    fq4:'Cara menyimpan template?',fa4:'Di mode Bebas, tulis pertanyaan lalu klik Simpan Template.',
+    fq5:'Apakah riwayat tersimpan?',fa5:'Ya, tersimpan di localStorage browser. Tidak dikirim ke server.',
+    footNote:'Bukan penasihat investasi berlisensi. Semua analisis hanya untuk tujuan edukatif.',
+    hEmpty:'Belum ada riwayat analisis',
+    wlEmpty:'Belum ada saham di watchlist',wlHint:'Klik ★ pada hasil analisis untuk menambahkan',
+    clearAll:'Hapus semua', confirm:'Yakin hapus semua riwayat?', confirmSub:'Tindakan ini tidak bisa dibatalkan.',
+    cancel:'Batal', ok:'Hapus',
+    copiedTxt:'Hasil analisis disalin!',sharedTxt:'Link siap dibagikan!',savedTmplTxt:'Template tersimpan!',
+    wlAdded:'Ditambahkan ke watchlist',wlRemoved:'Dihapus dari watchlist',
+    sysPrompt:'Kamu adalah analis saham profesional berpengalaman di pasar modal Indonesia dan global. Berikan analisis informatif, terstruktur, dan mudah dipahami untuk investor ritel. Gunakan Bahasa Indonesia. Format dengan heading (###) dan bullet points (-). Batasi 350-450 kata.',
+    navCta:'Mulai Gratis',
+    analyzing:'Menganalisis',
+  },
+  en:{
+    badge:'Powered by Claude AI · English',
+    h1:'Stock Analysis<br>with <em>artificial</em><br>intelligence',
+    sub:'Fundamentals, valuation, risk, and market sentiment — all in one question.',
+    btn1:'Start Analysis', btn2:'See Features',
+    fiturLabel:'// capabilities',
+    fiturH:'Everything you need<br>for smarter investing',
+    fiturSub:'Deep analysis in seconds, not hours',
+    appLabel:'// try now',
+    appH:'Ask anything about<br>your chosen stock',
+    appSub:'Choose the question mode that suits you best',
+    kbdAnalyze:'Analyze', kbdClear:'Clear', kbdPrint:'Print', kbdFocus:'Focus ticker',
+    tabAnalisis:'Analyze', tabCompare:'Compare',
+    modeQuick:'Quick', modeFree:'Custom', modeWizard:'Wizard', modeTemplate:'Templates',
+    tickerHint:'← stock ticker',
+    goBtn:'Analyze',
+    saveTmpl:'+ Save Template',
+    wiz1:'STEP 1 · Investment goal',
+    wiz2:'STEP 2 · Time horizon',
+    wiz3:'STEP 3 · Analysis focus',
+    wizPrev:'Select all options above to preview the question...',
+    empty:'Enter a stock ticker and question to start',
+    disc:'⚠ This analysis is for educational purposes only, not investment advice.',
+    faqH:'Frequently Asked Questions',
+    fq1:'Is this investment advice?',fa1:'No. StockMind is an AI-powered educational tool.',
+    fq2:'Which stocks can be analyzed?',fa2:'IDX, NYSE/NASDAQ, and global stocks. Just enter the correct ticker.',
+    fq3:'What is Wizard mode?',fa3:'Wizard guides you with 3 questions then auto-builds the analysis prompt.',
+    fq4:'How to save a template?',fa4:'In Custom mode, write your question then click Save Template.',
+    fq5:'Is history saved?',fa5:'Yes, saved in browser localStorage. Never sent to any server.',
+    footNote:'Not a licensed investment advisor. All analysis for educational purposes only.',
+    hEmpty:'No analysis history yet',
+    wlEmpty:'No stocks in watchlist',wlHint:'Click ★ on any result to add',
+    clearAll:'Clear all', confirm:'Delete all history?', confirmSub:'This action cannot be undone.',
+    cancel:'Cancel', ok:'Delete',
+    copiedTxt:'Analysis copied!',sharedTxt:'Ready to share!',savedTmplTxt:'Template saved!',
+    wlAdded:'Added to watchlist',wlRemoved:'Removed from watchlist',
+    sysPrompt:'You are an experienced professional stock analyst. Provide informative, structured, and easy-to-understand analysis for retail investors. Use English. Format with markdown headings (###) and bullet points (-). Keep it to 350-450 words.',
+    navCta:'Get Started',
+    analyzing:'Analyzing',
+  }
+}
+
+function t(k){return T[lang][k]||k}
+
+function applyLang(){
+  document.getElementById('badgeTxt').textContent=t('badge')
+  document.getElementById('heroH1').innerHTML=t('h1')
+  document.getElementById('heroSub').textContent=t('sub')
+  document.getElementById('heroBtn1').childNodes[0].textContent=t('btn1')+' '
+  document.getElementById('heroBtn2').textContent=t('btn2')
+  document.getElementById('lFiturLabel').textContent=t('fiturLabel')
+  document.getElementById('lFiturH').innerHTML=t('fiturH')
+  document.getElementById('lFiturSub').textContent=t('fiturSub')
+  document.getElementById('lAppLabel').textContent=t('appLabel')
+  document.getElementById('lAppH').innerHTML=t('appH')
+  document.getElementById('lAppSub').textContent=t('appSub')
+  document.getElementById('kbdAnalyze').textContent=t('kbdAnalyze')
+  document.getElementById('kbdClear').textContent=t('kbdClear')
+  document.getElementById('kbdPrint').textContent=t('kbdPrint')
+  document.getElementById('kbdFocus').textContent=t('kbdFocus')
+  document.getElementById('lTabAnalisis').textContent=t('tabAnalisis')
+  document.getElementById('lTabCompare').textContent=t('tabCompare')
+  document.getElementById('lModeQuick').textContent=t('modeQuick')
+  document.getElementById('lModeFree').textContent=t('modeFree')
+  document.getElementById('lModeWizard').textContent=t('modeWizard')
+  document.getElementById('lModeTemplate').textContent=t('modeTemplate')
+  document.getElementById('lTickerHint').textContent=t('tickerHint')
+  document.getElementById('lGoBtn').textContent=t('goBtn')
+  document.getElementById('lGoBtnFree').textContent=t('goBtn')
+  document.getElementById('lGoBtnWiz').textContent=t('goBtn')
+  document.getElementById('lSaveTmpl').textContent=t('saveTmpl')
+  document.getElementById('lWiz1').textContent=t('wiz1')
+  document.getElementById('lWiz2').textContent=t('wiz2')
+  document.getElementById('lWiz3').textContent=t('wiz3')
+  document.getElementById('wizPrev').textContent=t('wizPrev')
+  document.getElementById('lEmptyState').textContent=t('empty')
+  document.getElementById('rDisc').textContent=t('disc')
+  document.getElementById('lFaqH').textContent=t('faqH')
+  document.getElementById('fq1').textContent=t('fq1');document.getElementById('fa1').textContent=t('fa1')
+  document.getElementById('fq2').textContent=t('fq2');document.getElementById('fa2').textContent=t('fa2')
+  document.getElementById('fq3').textContent=t('fq3');document.getElementById('fa3').textContent=t('fa3')
+  document.getElementById('fq4').textContent=t('fq4');document.getElementById('fa4').textContent=t('fa4')
+  document.getElementById('fq5').textContent=t('fq5');document.getElementById('fa5').textContent=t('fa5')
+  document.getElementById('lFootNote').textContent=t('footNote')
+  document.getElementById('lHEmpty').textContent=t('hEmpty')
+  document.getElementById('lWLEmpty').textContent=t('wlEmpty')
+  document.getElementById('lWLHint').textContent=t('wlHint')
+  document.getElementById('navCtaBtn').textContent=t('navCta')
+  document.getElementById('langBtn').textContent=lang==='id'?'EN':'ID'
+  document.getElementById('langBtnInline').textContent='🌐 '+(lang==='id'?'EN':'ID')
+  // update chip q if lang changed (keep same chip, different q)
+  updateChipLang()
+}
+
+function updateChipLang(){
+  const chips=[
+    {id:'c1',q:lang==='id'?'Bagaimana fundamental dan valuasi saham ini saat ini?':'What are the current fundamentals and valuation of this stock?'},
+    {id:'c2',q:lang==='id'?'Apa saja risiko utama berinvestasi di saham ini?':'What are the main investment risks of this stock?'},
+    {id:'c3',q:lang==='id'?'Bagaimana posisi kompetitif perusahaan ini di industrinya?':'What is the competitive positioning of this company?'},
+    {id:'c4',q:lang==='id'?'Jelaskan histori dividen dan kebijakan payout saham ini':'Explain the dividend history and payout policy of this stock'},
+    {id:'c5',q:lang==='id'?'Apakah saat ini waktu yang tepat untuk membeli atau menahan saham ini?':'Is now a good time to buy or hold this stock?'},
+    {id:'c6',q:lang==='id'?'Bagaimana sentimen pasar dan katalis ke depan untuk saham ini?':'What is the market sentiment and upcoming catalysts for this stock?'},
+    {id:'c7',q:lang==='id'?'Siapa kompetitor utama dan bagaimana perbandingan kinerjanya?':'Who are the main competitors and how does performance compare?'},
+    {id:'c8',q:lang==='id'?'Bagaimana tren pendapatan dan laba bersih 3 tahun terakhir?':'What are the revenue and net income trends over the last 3 years?'},
+  ]
+  chips.forEach(c=>{
+    const el=document.getElementById(c.id)
+    if(el) el.onclick=()=>pickChip(el,c.q)
+  })
+}
+
+function toggleLang(){
+  lang=lang==='id'?'en':'id'
+  localStorage.setItem('sm_lang',lang)
+  applyLang()
+  toast(lang==='id'?'Bahasa diubah ke Indonesia':'Language changed to English','info')
+}
+
+// ─── THEME
+function toggleTheme(){
+  theme=theme==='dark'?'light':'dark'
+  document.documentElement.setAttribute('data-theme',theme)
+  localStorage.setItem('sm_theme',theme)
+  document.getElementById('themeIconDark').style.display=theme==='dark'?'':'none'
+  document.getElementById('themeIconLight').style.display=theme==='light'?'':'none'
+  toast(theme==='dark'?'Dark mode aktif':'Light mode aktif','info')
+}
+
+// ─── TOAST
+function toast(msg,type='success'){
+  const icons={success:'✓',info:'i',error:'✕'}
+  const el=document.createElement('div')
+  el.className='toast '+type
+  el.innerHTML=`<div class="toast-icon">${icons[type]}</div><span>${msg}</span>`
+  document.getElementById('toastContainer').appendChild(el)
+  setTimeout(()=>{el.classList.add('out');setTimeout(()=>el.remove(),300)},2800)
+}
+
+// ─── MARQUEE
+const MQ=[{s:'BBCA',p:'9.450',c:'+1.2%',u:1},{s:'TLKM',p:'3.800',c:'-0.5%',u:0},{s:'BMRI',p:'6.200',c:'+0.8%',u:1},{s:'GOTO',p:'55',c:'-1.1%',u:0},{s:'ASII',p:'4.700',c:'+0.3%',u:1},{s:'NVDA',p:'$890',c:'+2.4%',u:1},{s:'AAPL',p:'$185',c:'+0.6%',u:1},{s:'TSLA',p:'$248',c:'-1.8%',u:0},{s:'ANTM',p:'1.650',c:'+1.5%',u:1},{s:'UNVR',p:'2.700',c:'+0.4%',u:1}]
+document.getElementById('mqTrack').innerHTML=[...MQ,...MQ].map(t=>`<div class="mi"><span style="color:var(--text2);font-weight:500">${t.s}</span><span>${t.p}</span><span class="${t.u?'mup':'mdn'}">${t.c}</span></div>`).join('')
+
+// ─── AUTOCOMPLETE
+const TICKERS=[
+  {t:'BBCA',n:'Bank Central Asia'},{t:'BBRI',n:'Bank Rakyat Indonesia'},{t:'BMRI',n:'Bank Mandiri'},
+  {t:'BBNI',n:'Bank Negara Indonesia'},{t:'TLKM',n:'Telkom Indonesia'},{t:'ASII',n:'Astra International'},
+  {t:'GOTO',n:'GoTo Gojek Tokopedia'},{t:'ANTM',n:'Aneka Tambang'},{t:'INDF',n:'Indofood'},
+  {t:'UNVR',n:'Unilever Indonesia'},{t:'HMSP',n:'HM Sampoerna'},{t:'KLBF',n:'Kalbe Farma'},
+  {t:'AAPL',n:'Apple Inc'},{t:'MSFT',n:'Microsoft'},{t:'NVDA',n:'NVIDIA'},
+  {t:'TSLA',n:'Tesla'},{t:'GOOGL',n:'Alphabet (Google)'},{t:'AMZN',n:'Amazon'},
+  {t:'META',n:'Meta Platforms'},{t:'BABA',n:'Alibaba'},{t:'BIDU',n:'Baidu'},
+]
+function showAC(v){
+  const box=document.getElementById('acBox')
+  if(!v||v.length<1){box.style.display='none';return}
+  const res=TICKERS.filter(x=>x.t.startsWith(v)).slice(0,5)
+  if(!res.length){box.style.display='none';return}
+  box.innerHTML=res.map(r=>`<div class="ac-item" onmousedown="pickAC('${r.t}')"><span class="ac-ticker">${r.t}</span><span class="ac-name">${r.n}</span></div>`).join('')
+  box.style.display='block'
+}
+function hideAC(){document.getElementById('acBox').style.display='none'}
+function pickAC(t){document.getElementById('ticker').value=t;hideAC();document.getElementById('q-quick').focus()}
+
+// ─── SCROLL / NAV
+function go(id){document.getElementById(id)?.scrollIntoView({behavior:'smooth'})}
+function quickTicker(t){document.getElementById('ticker').value=t;go('analyzer');document.getElementById('q-quick').focus()}
+
+// ─── SCROLL REVEAL
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('revealed');observer.unobserve(e.target)}})
+},{threshold:.15})
+document.querySelectorAll('.feat-card').forEach((card,i)=>{
+  card.style.transitionDelay=(i*.07)+'s'
+  observer.observe(card)
+})
+
+// ─── TABS
+function setTab(t){
+  ['analisis','compare','riwayat','watchlist'].forEach(x=>{
+    document.getElementById('tab-'+x).classList.toggle('on',x===t)
+    document.getElementById('panel-'+x).style.display=x===t?'block':'none'
+  })
+  if(t==='riwayat')renderH()
+  if(t==='watchlist')renderWL()
+}
+
+// ─── MODE
+function setMode(m){
+  ['quick','free','wizard','template'].forEach(x=>{
+    document.getElementById('mb-'+x).classList.toggle('on',x===m)
+    document.getElementById('mp-'+x).style.display=x===m?'block':'none'
+  })
+  if(m==='template')renderTmpl()
+}
+
+// ─── QUICK
+function pickChip(el,q){
+  document.querySelectorAll('#chipGroup .chip').forEach(c=>c.classList.remove('on'))
+  el.classList.add('on'); document.getElementById('q-quick').value=q
+}
+function runQuick(){
+  const q=document.getElementById('q-quick').value.trim()
+  if(!q){document.getElementById('q-quick').focus();return}
+  doAnalyze(q)
+}
+
+// ─── FREE
+function updateCount(){document.getElementById('charCount').textContent=document.getElementById('q-free').value.length+' karakter'}
+function runFree(){const q=document.getElementById('q-free').value.trim();if(!q){document.getElementById('q-free').focus();return}doAnalyze(q)}
+function saveTmplFromFree(){
+  const q=document.getElementById('q-free').value.trim()
+  if(!q){toast(lang==='id'?'Tulis pertanyaan dulu':'Write a question first','error');return}
+  const name=prompt(lang==='id'?'Beri nama template:':'Name this template:','Template '+(tmpl.length+1))
+  if(!name)return
+  tmpl.push({id:Date.now()+'',name,q})
+  localStorage.setItem('sm_t',JSON.stringify(tmpl))
+  toast(t('savedTmplTxt'))
+}
+
+// ─── WIZARD
+function wiz(key,el,val){
+  ws[key]=val
+  document.getElementById('wg-'+key).querySelectorAll('.wiz-opt').forEach(b=>b.classList.remove('on'))
+  el.classList.add('on')
+  const{goal,hor,focus}=ws
+  const parts=[goal,hor,focus].filter(Boolean)
+  document.getElementById('wizPrev').textContent=parts.length===3?goal+', '+hor+'. '+focus+'.':parts.length?parts.join(', ')+'...':t('wizPrev')
+}
+function runWizard(){
+  const{goal,hor,focus}=ws
+  if(!goal||!hor||!focus){toast(lang==='id'?'Pilih semua opsi wizard dulu':'Select all wizard options first','error');return}
+  doAnalyze(goal+', '+hor+'. '+focus+'. Berikan analisis yang sesuai.')
+}
+
+// ─── TEMPLATES
+function renderTmpl(){
+  const list=document.getElementById('tmplList'),empty=document.getElementById('tmplEmpty')
+  if(!tmpl.length){list.innerHTML='';empty.style.display='block';return}
+  empty.style.display='none'
+  list.innerHTML=tmpl.map(x=>`
+    <div class="tmpl-card">
+      <div class="tmpl-info">
+        <div class="tmpl-name">${x.name}</div>
+        <div class="tmpl-q">${x.q}</div>
+      </div>
+      <button class="tmpl-use" onclick="useTmpl('${x.id}')">Pakai</button>
+      <button class="tmpl-del" onclick="delTmpl('${x.id}')">×</button>
+    </div>`).join('')
+}
+function useTmpl(id){
+  const x=tmpl.find(t=>t.id===id);if(!x)return
+  setMode('free');document.getElementById('q-free').value=x.q;updateCount()
+  toast(lang==='id'?'Template dimuat':'Template loaded','info')
+}
+function delTmpl(id){
+  tmpl=tmpl.filter(x=>x.id!==id);localStorage.setItem('sm_t',JSON.stringify(tmpl));renderTmpl()
+}
+function addTmpl(){
+  const name=document.getElementById('tnName').value.trim()
+  const q=document.getElementById('tnQ').value.trim()
+  if(!name||!q){toast(lang==='id'?'Isi nama dan pertanyaan':'Fill name and question','error');return}
+  tmpl.push({id:Date.now()+'',name,q});localStorage.setItem('sm_t',JSON.stringify(tmpl))
+  document.getElementById('tnName').value='';document.getElementById('tnQ').value=''
+  renderTmpl();toast(t('savedTmplTxt'))
+}
+
+// ─── CORE ANALYZE
+function fmt(text){
+  return text
+    .replace(/^### (.+)$/gm,'<h3>$1</h3>').replace(/^## (.+)$/gm,'<h3>$1</h3>').replace(/^# (.+)$/gm,'<h3>$1</h3>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/^[-•]\s(.+)$/gm,'<li>$1</li>').replace(/(<li>[\s\S]*?<\/li>)+/g,m=>`<ul>${m}</ul>`)
+    .split(/\n{2,}/).map(b=>b.startsWith('<')?b:`<p>${b}</p>`).join('')
+}
+function showR(s){
+  ['rEmpty','rLoad','rTopBar','rBody','rDisc','rErr'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none'})
+  if(s==='empty')document.getElementById('rEmpty').style.display='flex'
+  if(s==='load')document.getElementById('rLoad').style.display='flex'
+  if(s==='result'){document.getElementById('rTopBar').style.display='flex';document.getElementById('rBody').style.display='block';document.getElementById('rDisc').style.display='block'}
+  if(s==='err')document.getElementById('rErr').style.display='block'
+}
+async function doAnalyze(question){
+  const ticker=document.getElementById('ticker').value.trim().toUpperCase()
+  if(!ticker){document.getElementById('ticker').focus();toast(lang==='id'?'Masukkan kode saham dulu':'Enter a stock ticker first','error');return}
+  if(busy)return
+  busy=true;curT=ticker;curQ=question;curA=''
+  document.getElementById('rLoadTxt').textContent=t('analyzing')+' '+ticker+'...'
+  showR('load')
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',max_tokens:1000,stream:true,
+        system:t('sysPrompt'),
+        messages:[{role:'user',content:(lang==='id'?'Saham: ':'Stock: ')+ticker+'\n\n'+question}]
+      })
+    })
+    if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'API error')}
+    const reader=res.body.getReader(),dec=new TextDecoder()
+    document.getElementById('rTicker').textContent=ticker
+    document.getElementById('rTime').textContent=new Date().toLocaleDateString(lang==='id'?'id-ID':'en-US',{day:'numeric',month:'short',year:'numeric'})
+    updStar();showR('result')
+    const c=document.getElementById('rContent');c.className='prose cursor-blink'
+    while(true){
+      const{done,value}=await reader.read();if(done)break
+      for(const line of dec.decode(value).split('\n')){
+        if(!line.startsWith('data: '))continue
+        try{const j=JSON.parse(line.slice(6));if(j.type==='content_block_delta'&&j.delta?.type==='text_delta'){curA+=j.delta.text;c.innerHTML=fmt(curA)}}catch{}
+      }
+    }
+    c.className='prose'
+    saveH({id:Date.now()+'',ticker,question,answer:curA,ts:Date.now()})
+  }catch(e){
+    document.getElementById('rErr').textContent='✕ '+(e.message||'Error');showR('err')
+    toast(e.message||'Error','error')
+  }finally{busy=false}
+}
+
+// ─── ACTIONS
+async function copyR(){
+  try{await navigator.clipboard.writeText(curT+'\n\n'+curA);toast(t('copiedTxt'))}
+  catch{toast(lang==='id'?'Gagal menyalin':'Copy failed','error')}
+}
+async function shareR(){
+  const txt='Analisis '+curT+' via StockMind:\n\n'+curA.slice(0,280)+'...'
+  try{if(navigator.share)await navigator.share({title:'Analisis '+curT,text:txt});else{await navigator.clipboard.writeText(txt);toast(t('sharedTxt'))}}
+  catch{}
+}
+function exportR(){
+  const b=new Blob(['StockMind — Analisis '+curT+'\n'+'='.repeat(40)+'\n\nPertanyaan: '+curQ+'\n\nJawaban:\n'+curA],{type:'text/plain;charset=utf-8'})
+  Object.assign(document.createElement('a'),{href:URL.createObjectURL(b),download:'stockmind-'+curT+'.txt'}).click()
+  toast(lang==='id'?'File diunduh':'File downloaded','success')
+}
+
+// ─── WATCHLIST
+function toggleWL(){
+  if(!curT)return
+  const i=wl.findIndex(x=>x.ticker===curT)
+  if(i>-1){wl.splice(i,1);toast(t('wlRemoved'),'info')}
+  else{wl.unshift({ticker:curT,at:Date.now()});toast(t('wlAdded'))}
+  localStorage.setItem('sm_w',JSON.stringify(wl));updStar();updWLLabel()
+}
+function updStar(){
+  const has=wl.some(x=>x.ticker===curT),p=document.getElementById('starPath')
+  if(p){p.setAttribute('fill',has?'#c8f53a':'none');p.setAttribute('stroke',has?'#c8f53a':'currentColor')}
+}
+function updWLLabel(){document.getElementById('lbl-watchlist').textContent=wl.length?`Watchlist (${wl.length})`:'Watchlist'}
+function renderWL(){
+  const e=document.getElementById('wlEmpty'),g=document.getElementById('wlGrid')
+  if(!wl.length){e.style.display='flex';g.innerHTML='';return}
+  e.style.display='none'
+  g.innerHTML=wl.map(w=>`
+    <div class="wl-card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:500;letter-spacing:1.5px;color:var(--accent)">${w.ticker}</span>
+        <button onclick="rmWL('${w.ticker}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;line-height:1;transition:color .15s" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text3)'">×</button>
+      </div>
+      <div style="font-size:10px;font-family:'DM Mono',monospace;color:var(--text3)">${ago(w.at)}</div>
+      <button class="wl-analyze" onclick="fromWL('${w.ticker}')">Analisis ›</button>
+    </div>`).join('')
+}
+function rmWL(t){wl=wl.filter(x=>x.ticker!==t);localStorage.setItem('sm_w',JSON.stringify(wl));updWLLabel();renderWL()}
+function fromWL(t){setTab('analisis');document.getElementById('ticker').value=t;document.getElementById('q-quick').focus();go('analyzer')}
+updWLLabel()
+
+// ─── HISTORY
+function saveH(item){
+  hist=[item,...hist].slice(0,50);localStorage.setItem('sm_h',JSON.stringify(hist))
+  document.getElementById('lbl-riwayat').textContent=`Riwayat (${hist.length})`
+}
+function renderH(){
+  const e=document.getElementById('hEmpty'),l=document.getElementById('hList')
+  if(!hist.length){e.style.display='flex';l.innerHTML='';return}
+  e.style.display='none'
+  l.innerHTML=`<div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+    <button onclick="confirmClearH()" style="font-size:11px;color:var(--text3);background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;cursor:pointer;transition:all .15s" onmouseover="this.style.color='var(--red)'" onmouseout="this.style.color='var(--text3)'">${t('clearAll')}</button>
+    </div>`
+    +hist.map(h=>`
+    <div class="h-item" onclick="loadH('${h.id}')">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:7px;margin-bottom:3px">
+          <span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:1.5px;color:var(--accent);background:var(--adim);border:1px solid var(--aborder);padding:1px 7px;border-radius:4px">${h.ticker}</span>
+          <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">${ago(h.ts)}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.question}</div>
+      </div>
+      <svg width="12" height="12" viewBox="0 0 14 14" fill="none" style="color:var(--text3);flex-shrink:0"><path d="M5 2l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>`).join('')
+}
+
+// ─── CONFIRM DIALOG
+function confirmClearH(){
+  const overlay=document.createElement('div');overlay.className='confirm-overlay'
+  overlay.innerHTML=`<div class="confirm-box">
+    <h4>${t('confirm')}</h4><p>${t('confirmSub')}</p>
+    <div class="confirm-btns">
+      <button class="confirm-cancel" onclick="this.closest('.confirm-overlay').remove()">${t('cancel')}</button>
+      <button class="confirm-ok" onclick="clearH();this.closest('.confirm-overlay').remove()">${t('ok')}</button>
+    </div></div>`
+  document.body.appendChild(overlay)
+}
+function clearH(){hist=[];localStorage.removeItem('sm_h');document.getElementById('lbl-riwayat').textContent='Riwayat';renderH();toast(lang==='id'?'Riwayat dihapus':'History cleared','info')}
+function loadH(id){
+  const h=hist.find(x=>x.id===id);if(!h)return
+  setTab('analisis');curT=h.ticker;curQ=h.question;curA=h.answer
+  document.getElementById('ticker').value=h.ticker
+  document.getElementById('q-quick').value=h.question
+  document.getElementById('rTicker').textContent=h.ticker
+  document.getElementById('rTime').textContent=new Date(h.ts).toLocaleDateString(lang==='id'?'id-ID':'en-US',{day:'numeric',month:'short',year:'numeric'})
+  document.getElementById('rContent').innerHTML=fmt(h.answer)
+  updStar();showR('result');go('analyzer')
+  toast(lang==='id'?'Riwayat dimuat':'History loaded','info')
+}
+if(hist.length)document.getElementById('lbl-riwayat').textContent=`Riwayat (${hist.length})`
+
+// ─── COMPARE
+function addCmpTicker(){
+  if(cmpN>=4){toast(lang==='id'?'Maksimal 4 saham':'Max 4 stocks','error');return}
+  const inp=document.createElement('input')
+  inp.className='ticker-inp';inp.placeholder='Saham '+(cmpN+1);inp.id='ct'+cmpN;inp.style.width='100px'
+  inp.addEventListener('input',function(){this.value=this.value.toUpperCase()})
+  document.getElementById('cmpInputs').appendChild(inp);cmpN++
+}
+async function runCompare(){
+  const ts=[];for(let i=0;i<cmpN;i++){const v=document.getElementById('ct'+i)?.value.trim().toUpperCase();if(v)ts.push(v)}
+  if(ts.length<2){toast(lang==='id'?'Minimal 2 saham':'At least 2 stocks','error');return}
+  const topic=document.getElementById('cmpTopic').value
+  const res=document.getElementById('cmpResults')
+  res.style.display='grid';res.style.gridTemplateColumns=`repeat(${Math.min(ts.length,2)},1fr)`
+  res.innerHTML=ts.map(x=>`
+    <div class="cmp-card">
+      <div class="cmp-header">
+        <span style="font-family:'DM Mono',monospace;font-size:10px;font-weight:500;letter-spacing:1.5px;color:var(--accent);background:var(--adim);border:1px solid var(--aborder);padding:2px 8px;border-radius:4px">${x}</span>
+        <span id="cl-${x}" style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">menganalisis...</span>
+      </div>
+      <div id="cr-${x}" style="padding:.9rem">
+        <div class="skeleton-line" style="width:60%;margin-bottom:10px"></div>
+        <div class="skeleton-line"></div><div class="skeleton-line" style="width:85%"></div>
+      </div>
+    </div>`).join('')
+  ts.forEach(async x=>{
+    try{
+      const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:700,stream:true,system:'Analis saham profesional. Bahasa Indonesia. Format ### dan -. Maks 280 kata.',messages:[{role:'user',content:'Saham: '+x+'\n\n'+topic}]})})
+      const reader=r.body.getReader(),dec=new TextDecoder();let txt=''
+      const el=document.getElementById('cr-'+x);el.className='prose';el.style.padding='.9rem';el.style.fontSize=''
+      const lb=document.getElementById('cl-'+x);if(lb)lb.textContent=''
+      while(true){const{done,value}=await reader.read();if(done)break;for(const line of dec.decode(value).split('\n')){if(!line.startsWith('data: '))continue;try{const j=JSON.parse(line.slice(6));if(j.type==='content_block_delta'&&j.delta?.type==='text_delta'){txt+=j.delta.text;el.innerHTML=fmt(txt)}}catch{}}}
+    }catch(e){document.getElementById('cr-'+x).innerHTML='<span style="color:var(--red);font-size:12px">Gagal: '+e.message+'</span>'}
+  })
+}
+
+// ─── KEYBOARD SHORTCUTS
+document.addEventListener('keydown',e=>{
+  const meta=e.metaKey||e.ctrlKey
+  if(meta&&e.key==='Enter'){e.preventDefault();const tab=document.getElementById('panel-analisis').style.display!=='none';if(tab){const mode=document.getElementById('mp-free').style.display!=='none'?'free':document.getElementById('mp-wizard').style.display!=='none'?'wizard':'quick';if(mode==='free')runFree();else if(mode==='wizard')runWizard();else runQuick()}}
+  if(e.key==='Escape'){document.getElementById('ticker').value='';document.getElementById('q-quick').value='';document.getElementById('q-free').value='';showR('empty');hideAC();toast(lang==='id'?'Dibersihkan':'Cleared','info')}
+  if(meta&&e.key==='p'){e.preventDefault();window.print()}
+  if(meta&&e.key==='k'){e.preventDefault();document.getElementById('ticker').focus();go('analyzer')}
+})
+
+// ─── UTILS
+function ago(ts){
+  const d=Date.now()-ts
+  if(d<60000)return lang==='id'?'baru saja':'just now'
+  if(d<3600000)return Math.floor(d/60000)+(lang==='id'?' menit lalu':' min ago')
+  if(d<86400000)return Math.floor(d/3600000)+(lang==='id'?' jam lalu':' hr ago')
+  return new Date(ts).toLocaleDateString(lang==='id'?'id-ID':'en-US',{day:'numeric',month:'short'})
+}
+function faq(btn){btn.classList.toggle('open');btn.nextElementSibling.classList.toggle('open')}
+
+// ─── INIT
+applyLang()
+// Init history/watchlist display
+if(hist.length)renderH()
+if(wl.length)renderWL()
+</script>
+</body>
+</html>
